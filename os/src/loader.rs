@@ -92,4 +92,3 @@ pub fn init_app_cx(app_id: usize) -> &'static TaskContext {
         TaskContext::goto_restore(),
     )
 }
-
