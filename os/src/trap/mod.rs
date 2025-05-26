@@ -1,4 +1,17 @@
 
+use core::arch::global_asm;
+
+global_asm!(include_str!("trap.S"));
+
+pub fn init() {
+    unsafe extern "C" { fn __alltraps(); }
+    unsafe {
+        stvec::write(__alltraps as usize, TrapMode::Direct);
+    }
+}
+
+mod context;
+
 use riscv::register::{
     mtvec::TrapMode,
     stvec,
@@ -11,7 +24,6 @@ use riscv::register::{
     stval,
     sie,
 };
-
 use crate::task::{
     exit_current_and_run_next,
     suspend_current_and_run_next,
@@ -23,7 +35,8 @@ use crate::timer::set_next_trigger;
 pub fn enable_timer_interrupt() {
     unsafe { sie::set_stimer(); }
 }
-
+use crate::syscall::syscall;
+//use crate::batch::run_next_app;
 #[unsafe(no_mangle)]
 pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
     let scause = scause::read();
@@ -52,3 +65,5 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
     }
     cx
 }
+
+pub use context::TrapContext;
