@@ -15,7 +15,8 @@ mod config;
 mod task;
 mod mm;
 mod timer;
-
+mod sync;
+extern crate bitflags;
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
 
@@ -31,6 +32,7 @@ fn clear_bss() {
 
 #[unsafe(no_mangle)]
 pub fn rust_main() -> ! {
+    mm::init();
     clear_bss();
     println!("[kernel] Hello, world!");
 
@@ -40,7 +42,7 @@ pub fn rust_main() -> ! {
 
     loader::load_apps();
     task::run_first_task();
-    mm::init();
+  
 
     panic!("Unreachable in rust_main!");
 }

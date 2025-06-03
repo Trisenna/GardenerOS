@@ -1,6 +1,8 @@
+// os/src/mm/heap_allocator.rs
+
 use buddy_system_allocator::LockedHeap;
 use crate::config::KERNEL_HEAP_SIZE;
-use core::ptr::addr_of; // 添加这个导入
+use core::ptr::addr_of;
 
 #[global_allocator]
 static HEAP_ALLOCATOR: LockedHeap = LockedHeap::empty();
@@ -11,14 +13,14 @@ pub fn init_heap() {
     unsafe {
         HEAP_ALLOCATOR
             .lock()
-            .init(addr_of!(HEAP_SPACE) as usize, KERNEL_HEAP_SIZE); // 使用 addr_of!
+            .init(addr_of!(HEAP_SPACE) as usize, KERNEL_HEAP_SIZE);
     }
 }
+
 #[alloc_error_handler]
 pub fn handle_alloc_error(layout: core::alloc::Layout) -> ! {
     panic!("Heap allocation error, layout = {:?}", layout);
 }
-
 
 #[allow(unused)]
 pub fn heap_test() {
@@ -44,4 +46,3 @@ pub fn heap_test() {
     drop(v);
     println!("heap_test passed!");
 }
-
