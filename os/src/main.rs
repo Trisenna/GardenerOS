@@ -1,9 +1,9 @@
-
+#![feature(alloc_error_handler)]
 #![no_std]
 #![no_main]
 extern crate alloc;
 use core::arch::global_asm;
-#![feature(alloc_error_handler)]
+
 #[macro_use]
 mod console;
 mod lang_items;
