@@ -27,7 +27,7 @@ fn clear_bss() {
 #[unsafe(no_mangle)]
 #[unsafe(link_section = ".text.entry")]
 pub unsafe extern "C" fn _start() -> ! {
-    clear_bss();
+
     exit(main());
     panic!("unreachable after sys_exit!");
 }
