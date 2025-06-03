@@ -1,9 +1,9 @@
 
 #![no_std]
 #![no_main]
-
+extern crate alloc;
 use core::arch::global_asm;
-
+#![feature(alloc_error_handler)]
 #[macro_use]
 mod console;
 mod lang_items;
@@ -13,7 +13,7 @@ mod trap;
 mod loader;
 mod config;
 mod task;
-
+mod mm;
 mod timer;
 
 global_asm!(include_str!("entry.asm"));
@@ -40,6 +40,7 @@ pub fn rust_main() -> ! {
 
     loader::load_apps();
     task::run_first_task();
+    mm::init();
 
     panic!("Unreachable in rust_main!");
 }
