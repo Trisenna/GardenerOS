@@ -1,11 +1,24 @@
+mod context;
+
+use crate::syscall::syscall;
 use crate::task::{
+    exit_current_and_run_next,
+    suspend_current_and_run_next,
     current_user_token,
     current_trap_cx,
 };
-
-
+use crate::timer::set_next_trigger;
+use riscv::register::{
+    mtvec::TrapMode,
+    scause::{self, Exception, Trap, Interrupt},
+    sie, stval, stvec,
+};
 use crate::config::{TRAP_CONTEXT, TRAMPOLINE};
+use core::arch::{global_asm, asm};
 
+pub use context::TrapContext;
+
+global_asm!(include_str!("trap.S"));
 
 pub fn init() {
     set_kernel_trap_entry();
@@ -21,6 +34,10 @@ fn set_user_trap_entry() {
     unsafe {
         stvec::write(TRAMPOLINE as usize, TrapMode::Direct);
     }
+}
+
+pub fn enable_timer_interrupt() {
+    unsafe { sie::set_stimer(); }
 }
 
 #[unsafe(no_mangle)]
@@ -51,7 +68,6 @@ pub fn trap_handler() -> ! {
             panic!("Unsupported trap {:?}, stval = {:#x}!", scause.cause(), stval);
         }
     }
-    # 返回cx修改为trap_return();
     trap_return();
 }
 
@@ -60,7 +76,7 @@ pub fn trap_return() -> ! {
     set_user_trap_entry();
     let trap_cx_ptr = TRAP_CONTEXT;
     let user_satp = current_user_token();
-    extern "C" {
+    unsafe extern "C" {
         fn __alltraps();
         fn __restore();
     }
@@ -81,4 +97,3 @@ pub fn trap_return() -> ! {
 pub fn trap_from_kernel() -> ! {
     panic!("a trap from kernel!");
 }
-

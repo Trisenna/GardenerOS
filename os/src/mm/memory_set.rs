@@ -1,6 +1,3 @@
-// os/src/mm/memory_set.rs
-
-use core::arch::asm;
 use super::{PageTable, PageTableEntry, PTEFlags};
 use super::{VirtPageNum, VirtAddr, PhysPageNum, PhysAddr};
 use super::{FrameTracker, frame_alloc};
@@ -11,12 +8,6 @@ use riscv::register::satp;
 use alloc::sync::Arc;
 use lazy_static::*;
 use crate::sync::UPSafeCell;
-
-lazy_static! {
-    pub static ref KERNEL_SPACE: Arc<UPSafeCell<MemorySet>> = Arc::new(unsafe {
-        UPSafeCell::new(MemorySet::new_kernel())
-    });
-}
 use crate::config::{
     MEMORY_END,
     PAGE_SIZE,
@@ -24,9 +15,9 @@ use crate::config::{
     TRAP_CONTEXT,
     USER_STACK_SIZE
 };
-use bitflags::*;
+use core::arch::asm;
 
-extern "C" {
+unsafe extern "C" {
     fn stext();
     fn etext();
     fn srodata();
@@ -37,6 +28,12 @@ extern "C" {
     fn ebss();
     fn ekernel();
     fn strampoline();
+}
+
+lazy_static! {
+    pub static ref KERNEL_SPACE: Arc<UPSafeCell<MemorySet>> = Arc::new(unsafe {
+        UPSafeCell::new(MemorySet::new_kernel())
+    });
 }
 
 pub struct MapArea {
@@ -110,7 +107,7 @@ impl MemorySet {
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.page_table.translate(vpn)
     }
-
+    
     pub fn new_kernel() -> Self {
         let mut memory_set = Self::new_bare();
         // map trampoline
@@ -149,15 +146,27 @@ impl MemorySet {
             MapPermission::R | MapPermission::W,
         ), None);
         println!("mapping physical memory");
+        let ekernel_addr = ekernel as usize;
+        let memory_end_addr = MEMORY_END;
+        println!("Physical memory range: [{:#x}, {:#x})", ekernel_addr, memory_end_addr);
+        println!("Size to map: {} bytes, {} pages", 
+            memory_end_addr - ekernel_addr, 
+            (memory_end_addr - ekernel_addr) / PAGE_SIZE);
+
+        // 只映射一个较小的范围用于测试，避免映射过大的内存区域
+        let safe_end = core::cmp::min(memory_end_addr, ekernel_addr + 0x200000); // 最多映射2MB
+        println!("Actually mapping: [{:#x}, {:#x})", ekernel_addr, safe_end);
+
         memory_set.push(MapArea::new(
-            (ekernel as usize).into(),
-            MEMORY_END.into(),
+            ekernel_addr.into(),
+            safe_end.into(),  // 注意这里改为 safe_end 而不是 MEMORY_END
             MapType::Identical,
             MapPermission::R | MapPermission::W,
         ), None);
+        println!("Physical memory mapping completed");
         memory_set
     }
-
+    
     /// Include sections in elf and trampoline and TrapContext and user stack,
     /// also returns user_sp and entry point.
     pub fn from_elf(elf_data: &[u8]) -> (Self, usize, usize) {

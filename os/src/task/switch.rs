@@ -1,4 +1,3 @@
-
 use core::arch::global_asm;
 
 global_asm!(include_str!("switch.S"));
@@ -11,4 +10,3 @@ unsafe extern "C" {
         next_task_cx_ptr: *const TaskContext
     );
 }
-

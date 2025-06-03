@@ -1,36 +1,12 @@
-
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
-
-BASE_ADDRESS = 0x0;
+BASE_ADDRESS = 0x80200000;
 
 SECTIONS
 {
     . = BASE_ADDRESS;
-    .text : {
-        *(.text.entry)
-        *(.text .text.*)
-    }
-    . = ALIGN(4K);
-    .rodata : {
-        *(.rodata .rodata.*)
-        *(.srodata .srodata.*)
-    }
-    . = ALIGN(4K);
-    .data : {
-        *(.data .data.*)
-        *(.sdata .sdata.*)
-    }
-    .bss : {
-        start_bss = .;
-        *(.bss .bss.*)
-        *(.sbss .sbss.*)
-        end_bss = .;
-    }
-    /DISCARD/ : {
-        *(.eh_frame)
-        *(.debug*)
-    }
+    skernel = .;
+
     stext = .;
     .text : {
         *(.text.entry)
@@ -41,4 +17,37 @@ SECTIONS
         *(.text .text.*)
     }
 
+    . = ALIGN(4K);
+    etext = .;
+    srodata = .;
+    .rodata : {
+        *(.rodata .rodata.*)
+        *(.srodata .srodata.*)
+    }
+
+    . = ALIGN(4K);
+    erodata = .;
+    sdata = .;
+    .data : {
+        *(.data .data.*)
+        *(.sdata .sdata.*)
+    }
+
+    . = ALIGN(4K);
+    edata = .;
+    .bss : {
+        *(.bss.stack)
+        sbss_with_stack = .;
+        sbss = .;
+        *(.bss .bss.*)
+        *(.sbss .sbss.*)
+    }
+
+    . = ALIGN(4K);
+    ebss = .;
+    ekernel = .;
+
+    /DISCARD/ : {
+        *(.eh_frame)
+    }
 }
