@@ -5,3 +5,5 @@ app_1: 01power_5
 app_2: 02power_7
 app_3: 03sleep
 app_4: 04quick_power
+app_5: initproc
+app_6: user_shell
