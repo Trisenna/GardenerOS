@@ -217,6 +217,11 @@ impl MemorySet {
             self.areas.remove(idx);
         }
     }
+    
+    // 新添加的方法：回收数据页面
+    pub fn recycle_data_pages(&mut self) {
+        self.areas.clear();
+    }
 }
 
 pub struct MapArea {
