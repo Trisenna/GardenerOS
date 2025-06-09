@@ -7,7 +7,7 @@ DISASM_TMP := target/$(TARGET)/$(MODE)/asm
 
 # BOARD
 SBI ?= rustsbi
-BOOTLOADER := ./bootloader/$(SBI).bin
+BOOTLOADER := ../bootloader/$(SBI).bin
 
 # KERNEL ENTRY
 KERNEL_ENTRY_PA := 0x80200000
@@ -19,7 +19,7 @@ OBJCOPY := rust-objcopy --binary-architecture=riscv64
 # Disassembly
 DISASM ?= -x
 
-build: $(KERNEL_BIN)
+build: env $(KERNEL_BIN)
 
 env:
 	(rustup target list | grep "riscv64gc-unknown-none-elf (installed)") || rustup target add $(TARGET)
@@ -31,6 +31,7 @@ $(KERNEL_BIN): kernel
 	@$(OBJCOPY) $(KERNEL_ELF) --strip-all -O binary $@
 
 kernel:
+	@cd ../user && make build
 	@cargo build --release
 
 clean:

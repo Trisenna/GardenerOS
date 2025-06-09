@@ -1,4 +1,3 @@
-
 .altmacro
 .macro SAVE_GP n
     sd x\n, \n*8(sp)
@@ -68,4 +67,3 @@ __restore:
     # back to user stack
     ld sp, 2*8(sp)
     sret
-

@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![feature(panic_info_message)]
 #![feature(alloc_error_handler)]
 
 use core::arch::global_asm;
@@ -26,7 +27,7 @@ global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
 
 fn clear_bss() {
-    unsafe extern "C" {
+    extern "C" {
         fn sbss();
         fn ebss();
     }
@@ -38,7 +39,7 @@ fn clear_bss() {
     }
 }
 
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub fn rust_main() -> ! {
     clear_bss();
     println!("[kernel] Hello, world!");

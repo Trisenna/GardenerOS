@@ -1,5 +1,3 @@
-// os/src/mm/frame_allocator.rs
-
 use super::{PhysAddr, PhysPageNum};
 use alloc::vec::Vec;
 use crate::sync::UPSafeCell;
@@ -53,7 +51,6 @@ impl StackFrameAllocator {
         println!("last {} Physical Frames.", self.end - self.current);
     }
 }
-
 impl FrameAllocator for StackFrameAllocator {
     fn new() -> Self {
         Self {
@@ -97,7 +94,7 @@ lazy_static! {
 }
 
 pub fn init_frame_allocator() {
-    unsafe extern "C" {
+    extern "C" {
         fn ekernel();
     }
     FRAME_ALLOCATOR
@@ -135,3 +132,4 @@ pub fn frame_allocator_test() {
     drop(v);
     println!("frame_allocator_test passed!");
 }
+

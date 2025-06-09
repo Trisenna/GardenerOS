@@ -1,42 +1,29 @@
 #![no_std]
 #![feature(linkage)]
-
-use syscall::*;
-
-pub fn write(fd: usize, buf: &[u8]) -> isize { sys_write(fd, buf) }
-pub fn exit(exit_code: i32) -> isize { sys_exit(exit_code) }
+#![feature(panic_info_message)]
 
 #[macro_use]
 pub mod console;
 mod syscall;
 mod lang_items;
 
-fn clear_bss() {
-    unsafe extern "C" {
-        fn start_bss();
-        fn end_bss();
-    }
-
-    unsafe {
-        (start_bss as usize..end_bss as usize).for_each(|addr| {
-            (addr as *mut u8).write_volatile(0);
-        });
-    }
-}
-
-#[unsafe(no_mangle)]
-#[unsafe(link_section = ".text.entry")]
-pub unsafe extern "C" fn _start() -> ! {
-
+#[no_mangle]
+#[link_section = ".text.entry"]
+pub extern "C" fn _start() -> ! {
     exit(main());
     panic!("unreachable after sys_exit!");
 }
 
 #[linkage = "weak"]
-#[unsafe(no_mangle)]
+#[no_mangle]
 fn main() -> i32 {
     panic!("Cannot find main!");
 }
 
+use syscall::*;
+
+pub fn write(fd: usize, buf: &[u8]) -> isize { sys_write(fd, buf) }
+pub fn exit(exit_code: i32) -> isize { sys_exit(exit_code) }
 pub fn yield_() -> isize { sys_yield() }
 pub fn get_time() -> isize { sys_get_time() }
+

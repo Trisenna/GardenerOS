@@ -1,3 +1,4 @@
+use core::arch::asm;
 use super::{PageTable, PageTableEntry, PTEFlags};
 use super::{VirtPageNum, VirtAddr, PhysPageNum, PhysAddr};
 use super::{FrameTracker, frame_alloc};
@@ -15,9 +16,8 @@ use crate::config::{
     TRAP_CONTEXT,
     USER_STACK_SIZE
 };
-use core::arch::asm;
 
-unsafe extern "C" {
+extern "C" {
     fn stext();
     fn etext();
     fn srodata();
@@ -32,30 +32,8 @@ unsafe extern "C" {
 
 lazy_static! {
     pub static ref KERNEL_SPACE: Arc<UPSafeCell<MemorySet>> = Arc::new(unsafe {
-        UPSafeCell::new(MemorySet::new_kernel())
-    });
-}
-
-pub struct MapArea {
-    vpn_range: VPNRange,
-    data_frames: BTreeMap<VirtPageNum, FrameTracker>,
-    map_type: MapType,
-    map_perm: MapPermission,
-}
-
-#[derive(Copy, Clone, PartialEq, Debug)]
-pub enum MapType {
-    Identical,
-    Framed,
-}
-
-bitflags! {
-    pub struct MapPermission: u8 {
-        const R = 1 << 1;
-        const W = 1 << 2;
-        const X = 1 << 3;
-        const U = 1 << 4;
-    }
+        UPSafeCell::new(MemorySet::new_kernel()
+    )});
 }
 
 pub struct MemorySet {
@@ -97,17 +75,7 @@ impl MemorySet {
             PTEFlags::R | PTEFlags::X,
         );
     }
-    pub fn activate(&self) {
-        let satp = self.page_table.token();
-        unsafe {
-            satp::write(satp);
-            asm!("sfence.vma");
-        }
-    }
-    pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
-        self.page_table.translate(vpn)
-    }
-    
+    /// Without kernel stacks.
     pub fn new_kernel() -> Self {
         let mut memory_set = Self::new_bare();
         // map trampoline
@@ -146,27 +114,14 @@ impl MemorySet {
             MapPermission::R | MapPermission::W,
         ), None);
         println!("mapping physical memory");
-        let ekernel_addr = ekernel as usize;
-        let memory_end_addr = MEMORY_END;
-        println!("Physical memory range: [{:#x}, {:#x})", ekernel_addr, memory_end_addr);
-        println!("Size to map: {} bytes, {} pages", 
-            memory_end_addr - ekernel_addr, 
-            (memory_end_addr - ekernel_addr) / PAGE_SIZE);
-
-        // 只映射一个较小的范围用于测试，避免映射过大的内存区域
-        let safe_end = core::cmp::min(memory_end_addr, ekernel_addr + 0x200000); // 最多映射2MB
-        println!("Actually mapping: [{:#x}, {:#x})", ekernel_addr, safe_end);
-
         memory_set.push(MapArea::new(
-            ekernel_addr.into(),
-            safe_end.into(),  // 注意这里改为 safe_end 而不是 MEMORY_END
+            (ekernel as usize).into(),
+            MEMORY_END.into(),
             MapType::Identical,
             MapPermission::R | MapPermission::W,
         ), None);
-        println!("Physical memory mapping completed");
         memory_set
     }
-    
     /// Include sections in elf and trampoline and TrapContext and user stack,
     /// also returns user_sp and entry point.
     pub fn from_elf(elf_data: &[u8]) -> (Self, usize, usize) {
@@ -224,6 +179,23 @@ impl MemorySet {
         ), None);
         (memory_set, user_stack_top, elf.header.pt2.entry_point() as usize)
     }
+    pub fn activate(&self) {
+        let satp = self.page_table.token();
+        unsafe {
+            satp::write(satp);
+            asm!("sfence.vma");
+        }
+    }
+    pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
+        self.page_table.translate(vpn)
+    }
+}
+
+pub struct MapArea {
+    vpn_range: VPNRange,
+    data_frames: BTreeMap<VirtPageNum, FrameTracker>,
+    map_type: MapType,
+    map_perm: MapPermission,
 }
 
 impl MapArea {
@@ -299,6 +271,21 @@ impl MapArea {
             }
             current_vpn.step();
         }
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum MapType {
+    Identical,
+    Framed,
+}
+
+bitflags! {
+    pub struct MapPermission: u8 {
+        const R = 1 << 1;
+        const W = 1 << 2;
+        const X = 1 << 3;
+        const U = 1 << 4;
     }
 }
 

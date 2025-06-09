@@ -1,5 +1,19 @@
 mod context;
 
+use core::arch::asm;
+use core::arch::global_asm;
+use riscv::register::{
+    mtvec::TrapMode,
+    stvec,
+    scause::{
+        self,
+        Trap,
+        Exception,
+        Interrupt,
+    },
+    stval,
+    sie,
+};
 use crate::syscall::syscall;
 use crate::task::{
     exit_current_and_run_next,
@@ -8,15 +22,7 @@ use crate::task::{
     current_trap_cx,
 };
 use crate::timer::set_next_trigger;
-use riscv::register::{
-    mtvec::TrapMode,
-    scause::{self, Exception, Trap, Interrupt},
-    sie, stval, stvec,
-};
 use crate::config::{TRAP_CONTEXT, TRAMPOLINE};
-use core::arch::{global_asm, asm};
-
-pub use context::TrapContext;
 
 global_asm!(include_str!("trap.S"));
 
@@ -40,7 +46,7 @@ pub fn enable_timer_interrupt() {
     unsafe { sie::set_stimer(); }
 }
 
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub fn trap_handler() -> ! {
     set_kernel_trap_entry();
     let cx = current_trap_cx();
@@ -71,12 +77,12 @@ pub fn trap_handler() -> ! {
     trap_return();
 }
 
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub fn trap_return() -> ! {
     set_user_trap_entry();
     let trap_cx_ptr = TRAP_CONTEXT;
     let user_satp = current_user_token();
-    unsafe extern "C" {
+    extern "C" {
         fn __alltraps();
         fn __restore();
     }
@@ -93,7 +99,9 @@ pub fn trap_return() -> ! {
     }
 }
 
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub fn trap_from_kernel() -> ! {
     panic!("a trap from kernel!");
 }
+
+pub use context::{TrapContext};

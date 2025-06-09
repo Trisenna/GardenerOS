@@ -1,24 +1,42 @@
-// os/src/mm/address.rs
-
 use crate::config::{PAGE_SIZE, PAGE_SIZE_BITS};
 use super::PageTableEntry;
 use core::fmt::{self, Debug, Formatter};
 
-#[repr(C)]
+/// Definitions
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct PhysAddr(pub usize);
 
-#[repr(C)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct VirtAddr(pub usize);
 
-#[repr(C)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct PhysPageNum(pub usize);
 
-#[repr(C)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct VirtPageNum(pub usize);
+
+/// Debugging
+
+impl Debug for VirtAddr {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_fmt(format_args!("VA:{:#x}", self.0))
+    }
+}
+impl Debug for VirtPageNum {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_fmt(format_args!("VPN:{:#x}", self.0))
+    }
+}
+impl Debug for PhysAddr {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_fmt(format_args!("PA:{:#x}", self.0))
+    }
+}
+impl Debug for PhysPageNum {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_fmt(format_args!("PPN:{:#x}", self.0))
+    }
+}
 
 /// T: {PhysAddr, VirtAddr, PhysPageNum, VirtPageNum}
 /// T -> usize: T.0
@@ -55,57 +73,29 @@ impl VirtAddr {
     pub fn page_offset(&self) -> usize { self.0 & (PAGE_SIZE - 1) }
     pub fn aligned(&self) -> bool { self.page_offset() == 0 }
 }
-
 impl From<VirtAddr> for VirtPageNum {
     fn from(v: VirtAddr) -> Self {
         assert_eq!(v.page_offset(), 0);
         v.floor()
     }
 }
-
 impl From<VirtPageNum> for VirtAddr {
     fn from(v: VirtPageNum) -> Self { Self(v.0 << PAGE_SIZE_BITS) }
 }
-
 impl PhysAddr {
     pub fn floor(&self) -> PhysPageNum { PhysPageNum(self.0 / PAGE_SIZE) }
     pub fn ceil(&self) -> PhysPageNum { PhysPageNum((self.0 - 1 + PAGE_SIZE) / PAGE_SIZE) }
     pub fn page_offset(&self) -> usize { self.0 & (PAGE_SIZE - 1) }
     pub fn aligned(&self) -> bool { self.page_offset() == 0 }
 }
-
 impl From<PhysAddr> for PhysPageNum {
     fn from(v: PhysAddr) -> Self {
         assert_eq!(v.page_offset(), 0);
         v.floor()
     }
 }
-
 impl From<PhysPageNum> for PhysAddr {
     fn from(v: PhysPageNum) -> Self { Self(v.0 << PAGE_SIZE_BITS) }
-}
-
-/// Debugging
-
-impl Debug for VirtAddr {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_fmt(format_args!("VA:{:#x}", self.0))
-    }
-}
-impl Debug for VirtPageNum {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_fmt(format_args!("VPN:{:#x}", self.0))
-    }
-}
-impl Debug for PhysAddr {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_fmt(format_args!("PA:{:#x}", self.0))
-    }
-}
-impl Debug for PhysPageNum {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_fmt(format_args!("PPN:{:#x}", self.0))
-    }
 }
 
 impl VirtPageNum {

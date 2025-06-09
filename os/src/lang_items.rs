@@ -1,22 +1,19 @@
-use crate::sbi::shutdown;
 use core::panic::PanicInfo;
 
 #[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-    if let Some(location) = info.location() {
-        // info.message() now returns PanicMessage directly, not Option<PanicMessage>
-        let message = info.message();
+fn panic_handler(panic_info: &PanicInfo) -> ! {
+    if let Some(location) = panic_info.location() {
+        // panic_info.message() 直接返回 PanicMessage 而不是 Option
+        let message = panic_info.message();
         println!(
-            "Panicked at {}:{} {}",
-            location.file(),
-            location.line(),
+            "Panicked at {}:{}, {}", 
+            location.file(), 
+            location.line(), 
             message
         );
     } else {
-        // If no location, just output the message
-        let message = info.message();
+        let message = panic_info.message();
         println!("Panicked: {}", message);
     }
-
-    shutdown()
+    loop {}
 }

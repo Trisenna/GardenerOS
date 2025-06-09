@@ -3,13 +3,6 @@ use crate::trap::{TrapContext, trap_handler};
 use crate::config::{TRAP_CONTEXT, kernel_stack_position};
 use super::TaskContext;
 
-#[derive(Copy, Clone, PartialEq)]
-pub enum TaskStatus {
-    Ready,
-    Running,
-    Exited,
-}
-
 pub struct TaskControlBlock {
     pub task_status: TaskStatus,
     pub task_cx: TaskContext,
@@ -60,4 +53,11 @@ impl TaskControlBlock {
         );
         task_control_block
     }
+}
+
+#[derive(Copy, Clone, PartialEq)]
+pub enum TaskStatus {
+    Ready,
+    Running,
+    Exited,
 }

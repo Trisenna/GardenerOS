@@ -12,7 +12,6 @@ use alloc::vec::Vec;
 
 pub use context::TaskContext;
 
-
 pub struct TaskManager {
     num_app: usize,
     inner: UPSafeCell<TaskManagerInner>,

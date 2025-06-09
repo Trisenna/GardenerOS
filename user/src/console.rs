@@ -1,4 +1,3 @@
-
 use core::fmt::{self, Write};
 use super::write;
 
@@ -30,3 +29,4 @@ macro_rules! println {
         $crate::console::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?));
     }
 }
+

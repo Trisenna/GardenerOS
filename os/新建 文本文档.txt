@@ -1,0 +1,21 @@
+warning: `os` (bin "os") generated 7 warnings
+    Finished release [optimized] target(s) in 5.97s
+[rustsbi] RustSBI version 0.3.1, adapting to RISC-V SBI v1.0.0
+
+.______       __    __      _______.___________.  _______..______   __
+|   _  \     |  |  |  |    /       |           | /       ||   _  \ |  |
+|  |_)  |    |  |  |  |   |   (----`---|  |----`|   (----`|  |_)  ||  |
+|      /     |  |  |  |    \   \       |  |      \   \    |   _  < |  |
+|  |\  \----.|  `--'  |.----)   |      |  |  .----)   |   |  |_)  ||  |
+| _| `._____| \______/ |_______/       |__|  |_______/    |______/ |__|
+
+
+[rustsbi] Platform: QEMU (Version 0.2.0)
+[rustsbi] misa: RV64ACDFIMSU
+[rustsbi] mideleg: 0x222
+[rustsbi] medeleg: 0xb1ab
+[rustsbi-dtb] Hart count: cluster0 with 1 cores
+[rustsbi] Kernel entry: 0x80200000
+[kernel] Hello, world!
+heap_test passed!
+[kernel] back to world!
